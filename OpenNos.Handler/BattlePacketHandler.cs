@@ -315,7 +315,7 @@ namespace OpenNos.Handler
                                .Subscribe(
                                o =>
                                {
-                                   ServerManager.Instance.AskPVPRevive(target.Character.CharacterId);
+                                   ServerManager.Instance.AskPvpRevive(target.Character.CharacterId);
                                });
                     }
                 }

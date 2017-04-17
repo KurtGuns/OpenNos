@@ -125,9 +125,9 @@ namespace OpenNos.GameObject
 
         public int HeroXpRate { get; set; }
 
-        public bool inBazaarRefreshMode { get; set; }
+        public bool InBazaarRefreshMode { get; set; }
 
-        public bool inFamilyRefreshMode { get; set; }
+        public bool InFamilyRefreshMode { get; set; }
 
         public List<MailDTO> Mails { get; private set; }
 
@@ -179,29 +179,29 @@ namespace OpenNos.GameObject
             _raids[raid.RaidId] = raid;
         }
 
-        public void AskPVPRevive(long characterId)
+        public void AskPvpRevive(long characterId)
         {
-            ClientSession Session = GetSessionByCharacterId(characterId);
-            if (Session != null && Session.HasSelectedCharacter)
+            ClientSession session = GetSessionByCharacterId(characterId);
+            if (session != null && session.HasSelectedCharacter)
             {
-                if (Session.Character.IsVehicled)
+                if (session.Character.IsVehicled)
                 {
-                    Session.Character.RemoveVehicle();
+                    session.Character.RemoveVehicle();
                 }
-                Session.Character.Buff.Clear();
-                Session.SendPacket(Session.Character.GenerateStat());
-                Session.SendPacket(Session.Character.GenerateCond());
-                Session.SendPackets(UserInterfaceHelper.Instance.GenerateVb());
+                session.Character.Buff.Clear();
+                session.SendPacket(session.Character.GenerateStat());
+                session.SendPacket(session.Character.GenerateCond());
+                session.SendPackets(UserInterfaceHelper.Instance.GenerateVb());
 
-                Session.SendPacket("eff_ob -1 -1 0 4269");
-                Session.SendPacket(UserInterfaceHelper.Instance.GenerateDialog($"#revival^2 #revival^1 {Language.Instance.GetMessageFromKey("ASK_REVIVE_PVP")}"));
+                session.SendPacket("eff_ob -1 -1 0 4269");
+                session.SendPacket(UserInterfaceHelper.Instance.GenerateDialog($"#revival^2 #revival^1 {Language.Instance.GetMessageFromKey("ASK_REVIVE_PVP")}"));
                 Task.Factory.StartNew(async () =>
                 {
                     bool revive = true;
                     for (int i = 1; i <= 30; i++)
                     {
                         await Task.Delay(1000);
-                        if (Session.Character.Hp > 0)
+                        if (session.Character.Hp > 0)
                         {
                             revive = false;
                             break;
@@ -209,7 +209,7 @@ namespace OpenNos.GameObject
                     }
                     if (revive)
                     {
-                        Instance.ReviveFirstPosition(Session.Character.CharacterId);
+                        Instance.ReviveFirstPosition(session.Character.CharacterId);
                     }
                 });
             }
@@ -218,42 +218,46 @@ namespace OpenNos.GameObject
         // PacketHandler -> with Callback?
         public void AskRevive(long characterId)
         {
-            ClientSession Session = GetSessionByCharacterId(characterId);
-            if (Session != null && Session.HasSelectedCharacter)
+            ClientSession session = GetSessionByCharacterId(characterId);
+            if (session != null && session.HasSelectedCharacter)
             {
-                if (Session.Character.IsVehicled)
+                if (session.Character.IsVehicled)
                 {
-                    Session.Character.RemoveVehicle();
+                    session.Character.RemoveVehicle();
                 }
-                Session.Character.Buff.Clear();
-                Session.SendPacket(Session.Character.GenerateStat());
-                Session.SendPacket(Session.Character.GenerateCond());
-                Session.SendPackets(UserInterfaceHelper.Instance.GenerateVb());
-                switch (Session.CurrentMapInstance.MapInstanceType)
+                session.Character.Buff.Clear();
+                session.SendPacket(session.Character.GenerateStat());
+                session.SendPacket(session.Character.GenerateCond());
+                session.SendPackets(UserInterfaceHelper.Instance.GenerateVb());
+                switch (session.CurrentMapInstance.MapInstanceType)
                 {
                     case MapInstanceType.BaseMapInstance:
-                        if (Session.Character.Level > 20)
+                        if (session.Character.Level > 20)
                         {
-                            Session.Character.Dignity -= (short)(Session.Character.Level < 50 ? Session.Character.Level : 50);
-                            if (Session.Character.Dignity < -1000)
+                            session.Character.Dignity -= (short)(session.Character.Level < 50 ? session.Character.Level : 50);
+                            if (session.Character.Dignity < -1000)
                             {
-                                Session.Character.Dignity = -1000;
+                                session.Character.Dignity = -1000;
                             }
-                            Session.SendPacket(Session.Character.GenerateSay(string.Format(Language.Instance.GetMessageFromKey("LOSE_DIGNITY"), (short)(Session.Character.Level < 50 ? Session.Character.Level : 50)), 11));
-                            Session.SendPacket(Session.Character.GenerateFd());
-                            Session.CurrentMapInstance?.Broadcast(Session, Session.Character.GenerateIn(), ReceiverType.AllExceptMe);
-                            Session.CurrentMapInstance?.Broadcast(Session, Session.Character.GenerateGidx(), ReceiverType.AllExceptMe);
+                            session.SendPacket(
+                                session.Character.GenerateSay(
+                                    string.Format(Language.Instance.GetMessageFromKey("LOSE_DIGNITY"),
+                                        (short) (session.Character.Level < 50 ? session.Character.Level : 50)), 11));
+                            session.SendPacket(session.Character.GenerateFd());
+                            session.CurrentMapInstance?.Broadcast(session, session.Character.GenerateIn(), ReceiverType.AllExceptMe);
+                            session.CurrentMapInstance?.Broadcast(session, session.Character.GenerateGidx(), ReceiverType.AllExceptMe);
                         }
-                        Session.SendPacket("eff_ob -1 -1 0 4269");
+                        session.SendPacket("eff_ob -1 -1 0 4269");
 
-                        Session.SendPacket(UserInterfaceHelper.Instance.GenerateDialog($"#revival^0 #revival^1 {(Session.Character.Level > 20 ? Language.Instance.GetMessageFromKey("ASK_REVIVE") : Language.Instance.GetMessageFromKey("ASK_REVIVE_FREE"))}"));
+                        session.SendPacket(UserInterfaceHelper.Instance.GenerateDialog(
+                            $"#revival^0 #revival^1 {(session.Character.Level > 20 ? Language.Instance.GetMessageFromKey("ASK_REVIVE") : Language.Instance.GetMessageFromKey("ASK_REVIVE_FREE"))}"));
                         Task.Factory.StartNew(async () =>
                         {
                             bool revive = true;
                             for (int i = 1; i <= 30; i++)
                             {
                                 await Task.Delay(1000);
-                                if (Session.Character.Hp > 0)
+                                if (session.Character.Hp > 0)
                                 {
                                     revive = false;
                                     break;
@@ -261,28 +265,32 @@ namespace OpenNos.GameObject
                             }
                             if (revive)
                             {
-                                Instance.ReviveFirstPosition(Session.Character.CharacterId);
+                                Instance.ReviveFirstPosition(session.Character.CharacterId);
                             }
                         });
                         break;
 
                     case MapInstanceType.TimeSpaceInstance:
-                        if (!(Session.CurrentMapInstance.InstanceBag.Lives - Session.CurrentMapInstance.InstanceBag.DeadList.Count() <= 1))
+                        if (!(session.CurrentMapInstance.InstanceBag.Lives - session.CurrentMapInstance.InstanceBag.DeadList.Count() <= 1))
                         {
-                            Session.Character.Hp = 1;
-                            Session.Character.Mp = 1;
+                            session.Character.Hp = 1;
+                            session.Character.Mp = 1;
                             return;
                         }
-                        Session.SendPacket(UserInterfaceHelper.Instance.GenerateMsg(string.Format(Language.Instance.GetMessageFromKey("YOU_HAVE_LIFE"), Session.CurrentMapInstance.InstanceBag.Lives - Session.CurrentMapInstance.InstanceBag.DeadList.Count() + 1), 0));
-                        Session.SendPacket(UserInterfaceHelper.Instance.GenerateDialog($"#revival^1 #revival^1 {(Session.Character.Level > 10 ? Language.Instance.GetMessageFromKey("ASK_REVIVE_TS_LOW_LEVEL") : Language.Instance.GetMessageFromKey("ASK_REVIVE_TS"))}"));
-                        Session.CurrentMapInstance.InstanceBag.DeadList.Add(Session.Character.CharacterId);
+                        session.SendPacket(UserInterfaceHelper.Instance.GenerateMsg(
+                            string.Format(Language.Instance.GetMessageFromKey("YOU_HAVE_LIFE"),
+                                session.CurrentMapInstance.InstanceBag.Lives -
+                                session.CurrentMapInstance.InstanceBag.DeadList.Count + 1), 0));
+                        session.SendPacket(UserInterfaceHelper.Instance.GenerateDialog(
+                            $"#revival^1 #revival^1 {(session.Character.Level > 10 ? Language.Instance.GetMessageFromKey("ASK_REVIVE_TS_LOW_LEVEL") : Language.Instance.GetMessageFromKey("ASK_REVIVE_TS"))}"));
+                        session.CurrentMapInstance.InstanceBag.DeadList.Add(session.Character.CharacterId);
                         Task.Factory.StartNew(async () =>
                         {
                             bool revive = true;
                             for (int i = 1; i <= 30; i++)
                             {
                                 await Task.Delay(1000);
-                                if (Session.Character.Hp > 0)
+                                if (session.Character.Hp > 0)
                                 {
                                     revive = false;
                                     break;
@@ -290,21 +298,21 @@ namespace OpenNos.GameObject
                             }
                             if (revive)
                             {
-                                Instance.ReviveFirstPosition(Session.Character.CharacterId);
+                                Instance.ReviveFirstPosition(session.Character.CharacterId);
                             }
                         });
 
                         break;
 
                     case MapInstanceType.LodInstance:
-                        Session.SendPacket(UserInterfaceHelper.Instance.GenerateDialog($"#revival^0 #revival^1 {Language.Instance.GetMessageFromKey("ASK_REVIVE_LOD")}"));
+                        session.SendPacket(UserInterfaceHelper.Instance.GenerateDialog($"#revival^0 #revival^1 {Language.Instance.GetMessageFromKey("ASK_REVIVE_LOD")}"));
                         Task.Factory.StartNew(async () =>
                         {
                             bool revive = true;
                             for (int i = 1; i <= 30; i++)
                             {
                                 await Task.Delay(1000);
-                                if (Session.Character.Hp > 0)
+                                if (session.Character.Hp > 0)
                                 {
                                     revive = false;
                                     break;
@@ -312,33 +320,33 @@ namespace OpenNos.GameObject
                             }
                             if (revive)
                             {
-                                Instance.ReviveFirstPosition(Session.Character.CharacterId);
+                                Instance.ReviveFirstPosition(session.Character.CharacterId);
                             }
                         });
                         break;
 
                     default:
-                        Instance.ReviveFirstPosition(Session.Character.CharacterId);
+                        Instance.ReviveFirstPosition(session.Character.CharacterId);
                         break;
                 }
             }
         }
 
-        public void BazaarRefresh(long BazaarItemId)
+        public void BazaarRefresh(long bazaarItemId)
         {
-            inBazaarRefreshMode = true;
-            ServerCommunicationClient.Instance.HubProxy.Invoke("BazaarRefresh", ServerGroup, BazaarItemId);
-            SpinWait.SpinUntil(() => !inBazaarRefreshMode);
+            InBazaarRefreshMode = true;
+            ServerCommunicationClient.Instance.HubProxy.Invoke("BazaarRefresh", ServerGroup, bazaarItemId);
+            SpinWait.SpinUntil(() => !InBazaarRefreshMode);
         }
 
-        public void ChangeMap(long id, short? MapId = null, short? mapX = null, short? mapY = null)
+        public void ChangeMap(long id, short? mapId = null, short? mapX = null, short? mapY = null)
         {
             ClientSession session = GetSessionByCharacterId(id);
             if (session?.Character != null)
             {
-                if (MapId != null)
+                if (mapId != null)
                 {
-                    session.Character.MapInstanceId = GetBaseMapInstanceIdByMapId((short)MapId);
+                    session.Character.MapInstanceId = GetBaseMapInstanceIdByMapId((short)mapId);
                 }
                 ChangeMapInstance(id, session.Character.MapInstanceId, mapX, mapY);
             }
@@ -350,13 +358,17 @@ namespace OpenNos.GameObject
         }
 
         // Both partly
-        public void ChangeMapInstance(long id, Guid MapInstanceId, int? mapX = null, int? mapY = null)
+        public void ChangeMapInstance(long id, Guid mapInstanceId, int? mapX = null, int? mapY = null)
         {
             ClientSession session = GetSessionByCharacterId(id);
             if (session?.Character != null && !session.Character.IsChangingMapInstance)
             {
                 try
                 {
+                    if (session.Character.HasShopOpened)
+                        session.Character.CloseShop();
+                    if (session.Character.IsExchanging)
+                        session.Character.CloseExchangeOrTrade();
                     LeaveMap(session.Character.CharacterId);
 
                     session.Character.IsChangingMapInstance = true;
@@ -367,7 +379,7 @@ namespace OpenNos.GameObject
                     // cleanup sending queue to avoid sending uneccessary packets to it
                     session.ClearLowPriorityQueue();
 
-                    session.Character.MapInstanceId = MapInstanceId;
+                    session.Character.MapInstanceId = mapInstanceId;
                     if (session.Character.MapInstance.MapInstanceType == MapInstanceType.BaseMapInstance)
                     {
                         session.Character.MapId = session.Character.MapInstance.Map.MapId;
@@ -457,7 +469,11 @@ namespace OpenNos.GameObject
                         {
                             foreach (ClientSession groupSession in g.Characters)
                             {
-                                ClientSession chara = Sessions.FirstOrDefault(s => s.Character != null && s.Character.CharacterId == groupSession.Character.CharacterId && s.CurrentMapInstance == groupSession.CurrentMapInstance);
+                                ClientSession chara =
+                                    Sessions.FirstOrDefault(
+                                        s => s.Character != null &&
+                                             s.Character.CharacterId == groupSession.Character.CharacterId &&
+                                             s.CurrentMapInstance == groupSession.CurrentMapInstance);
                                 if (chara == null) continue;
                                 groupSession.SendPacket(groupSession.Character.GeneratePinit());
                                 groupSession.Character.SendPst();
@@ -500,16 +516,16 @@ namespace OpenNos.GameObject
             }
         }
 
-        public void FamilyRefresh(long FamilyId)
+        public void FamilyRefresh(long familyId)
         {
-            inFamilyRefreshMode = true;
-            ServerCommunicationClient.Instance.HubProxy.Invoke("FamilyRefresh", ServerGroup, FamilyId);
-            SpinWait.SpinUntil(() => !inFamilyRefreshMode);
+            InFamilyRefreshMode = true;
+            ServerCommunicationClient.Instance.HubProxy.Invoke("FamilyRefresh", ServerGroup, familyId);
+            SpinWait.SpinUntil(() => !InFamilyRefreshMode);
         }
 
-        public MapInstance GenerateMapInstance(short MapId, MapInstanceType type, InstanceBag mapclock)
+        public MapInstance GenerateMapInstance(short mapId, MapInstanceType type, InstanceBag mapclock)
         {
-            Map map = _maps.FirstOrDefault(m => m.MapId.Equals(MapId));
+            Map map = _maps.FirstOrDefault(m => m.MapId.Equals(mapId));
             if (map != null)
             {
                 Guid guid = Guid.NewGuid();
@@ -538,9 +554,9 @@ namespace OpenNos.GameObject
             return _skills;
         }
 
-        public Guid GetBaseMapInstanceIdByMapId(short MapId)
+        public Guid GetBaseMapInstanceIdByMapId(short mapId)
         {
-            return _mapinstances.FirstOrDefault(s => s.Value?.Map.MapId == MapId && s.Value.MapInstanceType == MapInstanceType.BaseMapInstance).Key;
+            return _mapinstances.FirstOrDefault(s => s.Value?.Map.MapId == mapId && s.Value.MapInstanceType == MapInstanceType.BaseMapInstance).Key;
         }
 
         public List<DropDTO> GetDropsByMonsterVNum(short monsterVNum)
@@ -693,106 +709,106 @@ namespace OpenNos.GameObject
             Mails = DAOFactory.MailDAO.LoadAll().ToList();
 
             // load explicite type of ItemDTO
-            foreach (ItemDTO itemDTO in DAOFactory.ItemDAO.LoadAll())
+            foreach (ItemDTO itemDto in DAOFactory.ItemDAO.LoadAll())
             {
                 Item item;
 
-                switch (itemDTO.ItemType)
+                switch (itemDto.ItemType)
                 {
                     case ItemType.Ammo:
-                        item = new NoFunctionItem(itemDTO);
+                        item = new NoFunctionItem(itemDto);
                         break;
 
                     case ItemType.Armor:
-                        item = new WearableItem(itemDTO);
+                        item = new WearableItem(itemDto);
                         break;
 
                     case ItemType.Box:
-                        item = new BoxItem(itemDTO);
+                        item = new BoxItem(itemDto);
                         break;
 
                     case ItemType.Event:
-                        item = new MagicalItem(itemDTO);
+                        item = new MagicalItem(itemDto);
                         break;
 
                     case ItemType.Fashion:
-                        item = new WearableItem(itemDTO);
+                        item = new WearableItem(itemDto);
                         break;
 
                     case ItemType.Food:
-                        item = new FoodItem(itemDTO);
+                        item = new FoodItem(itemDto);
                         break;
 
                     case ItemType.Jewelery:
-                        item = new WearableItem(itemDTO);
+                        item = new WearableItem(itemDto);
                         break;
 
                     case ItemType.Magical:
-                        item = new MagicalItem(itemDTO);
+                        item = new MagicalItem(itemDto);
                         break;
 
                     case ItemType.Main:
-                        item = new NoFunctionItem(itemDTO);
+                        item = new NoFunctionItem(itemDto);
                         break;
 
                     case ItemType.Map:
-                        item = new NoFunctionItem(itemDTO);
+                        item = new NoFunctionItem(itemDto);
                         break;
 
                     case ItemType.Part:
-                        item = new NoFunctionItem(itemDTO);
+                        item = new NoFunctionItem(itemDto);
                         break;
 
                     case ItemType.Potion:
-                        item = new PotionItem(itemDTO);
+                        item = new PotionItem(itemDto);
                         break;
 
                     case ItemType.Production:
-                        item = new ProduceItem(itemDTO);
+                        item = new ProduceItem(itemDto);
                         break;
 
                     case ItemType.Quest1:
-                        item = new NoFunctionItem(itemDTO);
+                        item = new NoFunctionItem(itemDto);
                         break;
 
                     case ItemType.Quest2:
-                        item = new NoFunctionItem(itemDTO);
+                        item = new NoFunctionItem(itemDto);
                         break;
 
                     case ItemType.Sell:
-                        item = new NoFunctionItem(itemDTO);
+                        item = new NoFunctionItem(itemDto);
                         break;
 
                     case ItemType.Shell:
-                        item = new MagicalItem(itemDTO);
+                        item = new MagicalItem(itemDto);
                         break;
 
                     case ItemType.Snack:
-                        item = new SnackItem(itemDTO);
+                        item = new SnackItem(itemDto);
                         break;
 
                     case ItemType.Special:
-                        item = new SpecialItem(itemDTO);
+                        item = new SpecialItem(itemDto);
                         break;
 
                     case ItemType.Specialist:
-                        item = new WearableItem(itemDTO);
+                        item = new WearableItem(itemDto);
                         break;
 
                     case ItemType.Teacher:
-                        item = new TeacherItem(itemDTO);
+                        item = new TeacherItem(itemDto);
                         break;
 
                     case ItemType.Upgrade:
-                        item = new UpgradeItem(itemDTO);
+                        item = new UpgradeItem(itemDto);
                         break;
 
                     case ItemType.Weapon:
-                        item = new WearableItem(itemDTO);
+                        item = new WearableItem(itemDto);
                         break;
 
                     default:
-                        item = new NoFunctionItem(itemDTO);
+                        item = new NoFunctionItem(itemDto);
                         break;
                 }
                 _items.Add(item);
@@ -829,9 +845,9 @@ namespace OpenNos.GameObject
             Logger.Log.Info(string.Format(Language.Instance.GetMessageFromKey("BAZAR_LOADED"), _monsterSkills.GetAllItems().Sum(i => i.Count)));
 
             // initialize npcmonsters
-            foreach (NpcMonsterDTO npcmonsterDTO in DAOFactory.NpcMonsterDAO.LoadAll())
+            foreach (NpcMonsterDTO npcmonsterDto in DAOFactory.NpcMonsterDAO.LoadAll())
             {
-                _npcs.Add(npcmonsterDTO as NpcMonster);
+                _npcs.Add(npcmonsterDto as NpcMonster);
             }
             Logger.Log.Info(string.Format(Language.Instance.GetMessageFromKey("NPCMONSTERS_LOADED"), _npcs.Count));
 
@@ -876,9 +892,9 @@ namespace OpenNos.GameObject
             Logger.Log.Info(string.Format(Language.Instance.GetMessageFromKey("TELEPORTERS_LOADED"), _teleporters.GetAllItems().Sum(i => i.Count)));
 
             // initialize skills
-            foreach (SkillDTO skillDTO in DAOFactory.SkillDAO.LoadAll())
+            foreach (SkillDTO skillDto in DAOFactory.SkillDAO.LoadAll())
             {
-                Skill skill = (Skill)skillDTO;
+                Skill skill = (Skill)skillDto;
                 skill.Combos.AddRange(DAOFactory.ComboDAO.LoadBySkillVnum(skill.SkillVNum).ToList());
                 _skills.Add(skill);
             }
@@ -971,24 +987,37 @@ namespace OpenNos.GameObject
             return Groups != null && Groups.Any(g => g.IsMemberOfGroup(characterId) && g.CharacterCount == 3);
         }
 
-        public void JoinMiniland(ClientSession Session, ClientSession MinilandOwner)
+        public void JoinMiniland(ClientSession session, ClientSession minilandOwner)
         {
-            ChangeMapInstance(Session.Character.CharacterId, MinilandOwner.Character.Miniland.MapInstanceId, 5, 8);
-            if (Session.Character.Miniland.MapInstanceId != MinilandOwner.Character.Miniland.MapInstanceId)
+            ChangeMapInstance(session.Character.CharacterId, minilandOwner.Character.Miniland.MapInstanceId, 5, 8);
+            if (session.Character.Miniland.MapInstanceId != minilandOwner.Character.Miniland.MapInstanceId)
             {
-                Session.SendPacket(UserInterfaceHelper.Instance.GenerateMsg(Session.Character.MinilandMessage.Replace(' ', '^'), 0));
-                Session.SendPacket(Session.Character.GenerateMlinfobr());
-                MinilandOwner.Character.GeneralLogs.Add(new GeneralLogDTO { AccountId = Session.Account.AccountId, CharacterId = Session.Character.CharacterId, IpAddress = Session.IpAddress, LogData = "Miniland", LogType = "World", Timestamp = DateTime.Now });
-                Session.SendPacket(MinilandOwner.Character.GenerateMinilandObjectForFriends());
+                session.SendPacket(UserInterfaceHelper.Instance.GenerateMsg(session.Character.MinilandMessage.Replace(' ', '^'), 0));
+                session.SendPacket(session.Character.GenerateMlinfobr());
+                minilandOwner.Character.GeneralLogs.Add(
+                    new GeneralLogDTO
+                    {
+                        AccountId = session.Account.AccountId,
+                        CharacterId = session.Character.CharacterId,
+                        IpAddress = session.IpAddress,
+                        LogData = "Miniland",
+                        LogType = "World",
+                        Timestamp = DateTime.Now
+                    });
+                session.SendPacket(minilandOwner.Character.GenerateMinilandObjectForFriends());
             }
             else
             {
-                Session.SendPacket(Session.Character.GenerateMlinfo());
-                Session.SendPacket(MinilandOwner.Character.GetMinilandObjectList());
+                session.SendPacket(session.Character.GenerateMlinfo());
+                session.SendPacket(minilandOwner.Character.GetMinilandObjectList());
             }
-            MinilandOwner.Character.Mates.Where(s => !s.IsTeamMember).ToList().ForEach(s => Session.SendPacket(s.GenerateIn()));
-            Session.SendPackets(MinilandOwner.Character.GetMinilandEffects());
-            Session.SendPacket(Session.Character.GenerateSay(string.Format(Language.Instance.GetMessageFromKey("MINILAND_VISITOR"), Session.Character.GeneralLogs.Count(s => s.LogData == "Miniland" && s.Timestamp.Day == DateTime.Now.Day), Session.Character.GeneralLogs.Count(s => s.LogData == "Miniland")), 10));
+            minilandOwner.Character.Mates.Where(s => !s.IsTeamMember).ToList().ForEach(s => session.SendPacket(s.GenerateIn()));
+            session.SendPackets(minilandOwner.Character.GetMinilandEffects());
+            session.SendPacket(session.Character.GenerateSay(
+                string.Format(Language.Instance.GetMessageFromKey("MINILAND_VISITOR"),
+                    session.Character.GeneralLogs.Count(
+                        s => s.LogData == "Miniland" && s.Timestamp.Day == DateTime.Now.Day),
+                    session.Character.GeneralLogs.Count(s => s.LogData == "Miniland")), 10));
         }
 
         // Server
@@ -1068,16 +1097,16 @@ namespace OpenNos.GameObject
             TopReputation = DAOFactory.CharacterDAO.GetTopReputation();
         }
 
-        public void RelationRefresh(long RelationId)
+        public void RelationRefresh(long relationId)
         {
             inRelationRefreshMode = true;
-            ServerCommunicationClient.Instance.HubProxy.Invoke("RelationRefresh", ServerGroup, RelationId);
+            ServerCommunicationClient.Instance.HubProxy.Invoke("RelationRefresh", ServerGroup, relationId);
             SpinWait.SpinUntil(() => !inRelationRefreshMode);
         }
 
-        public void RemoveMapInstance(Guid MapId)
+        public void RemoveMapInstance(Guid mapId)
         {
-            KeyValuePair<Guid, MapInstance> map = _mapinstances.FirstOrDefault(s => s.Key == MapId);
+            KeyValuePair<Guid, MapInstance> map = _mapinstances.FirstOrDefault(s => s.Key == mapId);
             if (!map.Equals(default(KeyValuePair<Guid, MapInstance>)))
             {
                 map.Value.Dispose();
@@ -1148,13 +1177,13 @@ namespace OpenNos.GameObject
             Broadcast($"msg 2 {message}");
         }
 
-        public void TeleportOnRandomPlaceInMap(ClientSession Session, Guid guid)
+        public void TeleportOnRandomPlaceInMap(ClientSession session, Guid guid)
         {
             MapInstance map = GetMapInstance(guid);
             if (guid != default(Guid))
             {
                 MapCell pos = map.Map.GetRandomPosition();
-                ChangeMapInstance(Session.Character.CharacterId, guid, pos.X, pos.Y);
+                ChangeMapInstance(session.Character.CharacterId, guid, pos.X, pos.Y);
             }
         }
 
@@ -1300,7 +1329,7 @@ namespace OpenNos.GameObject
                 BotProcess();
             });
 
-            EventHelper.Instance.RunEvent(new EventContainer(ServerManager.Instance.GetMapInstance(ServerManager.Instance.GetBaseMapInstanceIdByMapId(98)), EventActionType.NPCSEFFECTCHANGESTATE, true));
+            EventHelper.Instance.RunEvent(new EventContainer(Instance.GetMapInstance(Instance.GetBaseMapInstanceIdByMapId(98)), EventActionType.NPCSEFFECTCHANGESTATE, true));
             foreach (Schedule schedul in Schedules)
             {
                 Observable.Timer(TimeSpan.FromSeconds(EventHelper.Instance.GetMilisecondsBeforeTime(schedul.Time).TotalSeconds), TimeSpan.FromDays(1))
@@ -1377,8 +1406,9 @@ namespace OpenNos.GameObject
         {
             foreach (var map in _mapinstances)
             {
-                foreach (ScriptedInstance timespace in DAOFactory.TimeSpaceDAO.LoadByMap(map.Value.Map.MapId).ToList())
+                foreach (var scriptedInstanceDto in DAOFactory.TimeSpaceDAO.LoadByMap(map.Value.Map.MapId).ToList())
                 {
+                    var timespace = (ScriptedInstance) scriptedInstanceDto;
                     timespace.LoadGlobals();
                     map.Value.TimeSpaces.Add(timespace);
                 }
@@ -1405,9 +1435,9 @@ namespace OpenNos.GameObject
             {
                 return;
             }
-            long BazaarId = tuple.Item2;
-            BazaarItemDTO bzdto = DAOFactory.BazaarItemDAO.LoadById(BazaarId);
-            BazaarItemLink bzlink = BazaarList.FirstOrDefault(s => s.BazaarItem.BazaarItemId == BazaarId);
+            long bazaarId = tuple.Item2;
+            BazaarItemDTO bzdto = DAOFactory.BazaarItemDAO.LoadById(bazaarId);
+            BazaarItemLink bzlink = BazaarList.FirstOrDefault(s => s.BazaarItem.BazaarItemId == bazaarId);
             lock (BazaarList)
             {
                 if (bzdto != null)
@@ -1437,7 +1467,7 @@ namespace OpenNos.GameObject
                     BazaarList.Remove(bzlink);
                 }
             }
-            inBazaarRefreshMode = false;
+            InBazaarRefreshMode = false;
         }
 
         private void OnFamilyRefresh(object sender, EventArgs e)
@@ -1447,9 +1477,9 @@ namespace OpenNos.GameObject
             {
                 return;
             }
-            long FamilyId = tuple.Item2;
-            FamilyDTO famdto = DAOFactory.FamilyDAO.LoadById(FamilyId);
-            Family fam = FamilyList.FirstOrDefault(s => s.FamilyId == FamilyId);
+            long familyId = tuple.Item2;
+            FamilyDTO famdto = DAOFactory.FamilyDAO.LoadById(familyId);
+            Family fam = FamilyList.FirstOrDefault(s => s.FamilyId == familyId);
 
             lock (FamilyList)
             {
@@ -1506,7 +1536,7 @@ namespace OpenNos.GameObject
                     FamilyList.Remove(fam);
                 }
             }
-            inFamilyRefreshMode = false;
+            InFamilyRefreshMode = false;
         }
 
         private void OnMessageSentToCharacter(object sender, EventArgs e)
